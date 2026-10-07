@@ -1,0 +1,55 @@
+{% extends 'pacientes/base.html' %}
+
+{% block contenido %}
+<div class="card card-custom">
+    <div class="card-header card-header-custom d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0">Fichas Médicas de Pacientes</h5>
+        <a href="{% url 'crear_paciente' %}" class="btn btn-clinica btn-sm">+ Registrar Paciente</a>
+    </div>
+    <div class="card-body bg-white">
+        {% if pacientes %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="background-color: #2F404F; color: #ffffff;">RUT</th>
+                        <th style="background-color: #2F404F; color: #ffffff;">Nombre</th>
+                        <th style="background-color: #2F404F; color: #ffffff;">Edad</th>
+                        <th style="background-color: #2F404F; color: #ffffff;">Género</th>
+                        <th style="background-color: #2F404F; color: #ffffff;">Contacto</th>
+                        <th style="background-color: #2F404F; color: #ffffff;">Diagnóstico</th>
+                        <th style="background-color: #2F404F; color: #ffffff;">Costo</th>
+                        <th style="background-color: #2F404F; color: #ffffff;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in pacientes %}
+                    <tr>
+                        <td class="fw-bold" style="color: #2F404F;">{{ p.rut }}</td>
+                        <td>{{ p.nombre }}</td>
+                        <td>{{ p.edad }} años</td>
+                        <td><span class="badge" style="background-color: #C7DAD3; color: #2F404F;">{{ p.get_genero_display }}</span></td>
+                        <td>
+                            <small class="d-block text-muted">✉ {{ p.correo }}</small>
+                            <small class="d-block text-muted">☎ {{ p.telefono }}</small>
+                        </td>
+                        <td>{{ p.diagnostico }}</td>
+                        <td class="fw-semibold">${{ p.costo_consulta }}</td>
+                        <td>
+                            <a href="{% url 'editar_paciente' p.id %}" class="btn btn-sm text-white" style="background-color: #3894A1;">Editar</a>
+                            <a href="{% url 'eliminar_paciente' p.id %}" class="btn btn-sm btn-outline-danger">Eliminar</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <p class="text-muted fs-5 mb-3">No existen registros médicos ingresados en el sistema.</p>
+            <a href="{% url 'crear_paciente' %}" class="btn btn-clinica">Registrar el primer paciente</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

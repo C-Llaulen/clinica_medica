@@ -1,0 +1,29 @@
+{% extends 'pacientes/base.html' %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card card-custom">
+            <div class="card-header card-header-custom py-3" style="background-color: #3894A1;">
+                <h5 class="mb-0 text-white">Actualizar Datos Clínicos</h5>
+            </div>
+            <div class="card-body bg-white p-4">
+                <div class="alert p-3 mb-4" style="background-color: #C7DAD3; color: #2F404F; border: none;">
+                    <strong>Ficha Clínica del Paciente:</strong> {{ paciente.nombre }}<br>
+                    <strong>RUT:</strong> {{ paciente.rut }} <small>(Dato de identidad bloqueado para edición)</small>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <hr style="border-color: #C7DAD3;">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'listar_pacientes' %}" class="btn btn-outline-secondary">Volver al listado</a>
+                        <button type="submit" class="btn text-white" style="background-color: #3894A1;">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
