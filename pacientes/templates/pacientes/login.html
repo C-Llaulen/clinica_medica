@@ -1,0 +1,81 @@
+{% extends 'pacientes/base.html' %}
+
+{% block contenido %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card card-custom shadow-sm">
+            <div class="card-header card-header-custom py-3 text-center">
+                <h5 class="mb-0">Acceso Sistema Clínico</h5>
+            </div>
+            <div class="card-body bg-white p-4">
+                <div id="mensajeAlerta" class="alert alert-danger d-none" role="alert"></div>
+
+                <form id="formLogin">
+                    <div class="mb-3">
+                        <label for="username" class="form-label fw-bold">Usuario</label>
+                        <input type="text" class="form-control" id="username" required placeholder="Ej: admin">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label fw-bold">Contraseña</label>
+                        <input type="password" class="form-control" id="password" required placeholder="••••••••">
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-clinica py-2 fw-bold" id="btnLogin">
+                            Iniciar Sesión
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const formLogin = document.getElementById('formLogin');
+    const mensajeAlerta = document.getElementById('mensajeAlerta');
+    const btnLogin = document.getElementById('btnLogin');
+
+    formLogin.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        mensajeAlerta.classList.add('d-none');
+        mensajeAlerta.textContent = '';
+        btnLogin.disabled = true;
+        btnLogin.textContent = 'Verificando...';
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        try {
+            const respuesta = await fetch('/api/login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+
+            const datos = await respuesta.json();
+
+            if (respuesta.ok) {
+                sessionStorage.setItem('token', datos.token);
+                sessionStorage.setItem('username', datos.username);
+                
+                window.location.href = "{% url 'listar_pacientes' %}";
+            } else {
+                mensajeAlerta.textContent = datos.error || 'Credenciales inválidas.';
+                mensajeAlerta.classList.remove('d-none');
+            }
+        } catch (error) {
+            mensajeAlerta.textContent = 'Error de conexión con el servidor.';
+            mensajeAlerta.classList.remove('d-none');
+        } finally {
+            btnLogin.disabled = false;
+            btnLogin.textContent = 'Iniciar Sesión';
+        }
+    });
+</script>
+{% endblock %}

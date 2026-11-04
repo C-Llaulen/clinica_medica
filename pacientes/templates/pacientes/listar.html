@@ -1,55 +1,148 @@
 {% extends 'pacientes/base.html' %}
 
 {% block contenido %}
-<div class="card card-custom">
-    <div class="card-header card-header-custom d-flex justify-content-between align-items-center py-3">
-        <h5 class="mb-0">Fichas Médicas de Pacientes</h5>
-        <a href="{% url 'crear_paciente' %}" class="btn btn-clinica btn-sm">+ Registrar Paciente</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0 text-dark fw-bold">Listado de Pacientes</h3>
+    <div>
+        <a href="{% url 'crear_paciente' %}" class="btn btn-clinica me-2">+ Nuevo Paciente</a>
+        <button onclick="cerrarSesion()" class="btn btn-outline-danger">Cerrar Sesión</button>
     </div>
-    <div class="card-body bg-white">
-        {% if pacientes %}
+</div>
+
+<div class="card card-custom shadow-sm">
+    <div class="card-body p-0">
+        <p id="mensajeEstado" class="p-4 text-center text-muted mb-0">Cargando pacientes desde la API...</p>
+
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead>
+            <table class="table table-hover align-middle mb-0 d-none" id="tablaPacientes">
+                <thead class="table-light">
                     <tr>
-                        <th style="background-color: #2F404F; color: #ffffff;">RUT</th>
-                        <th style="background-color: #2F404F; color: #ffffff;">Nombre</th>
-                        <th style="background-color: #2F404F; color: #ffffff;">Edad</th>
-                        <th style="background-color: #2F404F; color: #ffffff;">Género</th>
-                        <th style="background-color: #2F404F; color: #ffffff;">Contacto</th>
-                        <th style="background-color: #2F404F; color: #ffffff;">Diagnóstico</th>
-                        <th style="background-color: #2F404F; color: #ffffff;">Costo</th>
-                        <th style="background-color: #2F404F; color: #ffffff;">Acciones</th>
+                        <th class="ps-4">ID</th>
+                        <th>RUT</th>
+                        <th>Nombre</th>
+                        <th>Edad</th>
+                        <th>Género</th>
+                        <th>Teléfono</th>
+                        <th>Costo Consulta</th>
+                        <th class="text-center pe-4">Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for p in pacientes %}
-                    <tr>
-                        <td class="fw-bold" style="color: #2F404F;">{{ p.rut }}</td>
-                        <td>{{ p.nombre }}</td>
-                        <td>{{ p.edad }} años</td>
-                        <td><span class="badge" style="background-color: #C7DAD3; color: #2F404F;">{{ p.get_genero_display }}</span></td>
-                        <td>
-                            <small class="d-block text-muted">✉ {{ p.correo }}</small>
-                            <small class="d-block text-muted">☎ {{ p.telefono }}</small>
-                        </td>
-                        <td>{{ p.diagnostico }}</td>
-                        <td class="fw-semibold">${{ p.costo_consulta }}</td>
-                        <td>
-                            <a href="{% url 'editar_paciente' p.id %}" class="btn btn-sm text-white" style="background-color: #3894A1;">Editar</a>
-                            <a href="{% url 'eliminar_paciente' p.id %}" class="btn btn-sm btn-outline-danger">Eliminar</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
+                <tbody id="cuerpoTabla">
                 </tbody>
             </table>
         </div>
-        {% else %}
-        <div class="text-center py-5">
-            <p class="text-muted fs-5 mb-3">No existen registros médicos ingresados en el sistema.</p>
-            <a href="{% url 'crear_paciente' %}" class="btn btn-clinica">Registrar el primer paciente</a>
-        </div>
-        {% endif %}
     </div>
 </div>
+
+<script>
+    const mensajeEstado = document.getElementById('mensajeEstado');
+    const tablaPacientes = document.getElementById('tablaPacientes');
+    const cuerpoTabla = document.getElementById('cuerpoTabla');
+
+    async function cargarPacientes() {
+        const token = sessionStorage.getItem('token');
+
+        if (!token) {
+            window.location.href = "{% url 'login' %}";
+            return;
+        }
+
+        try {
+            const respuesta = await fetch('/api/pacientes/', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Token ${token}`
+                }
+            });
+
+            if (respuesta.status === 401 || respuesta.status === 403) {
+                sessionStorage.removeItem('token');
+                window.location.href = "{% url 'login' %}";
+                return;
+            }
+
+            if (!respuesta.ok) {
+                throw new Error('Error al consultar los registros.');
+            }
+
+            const pacientes = await respuesta.json();
+            cuerpoTabla.replaceChildren();
+
+            if (pacientes.length === 0) {
+                mensajeEstado.textContent = 'No hay pacientes registrados en el sistema.';
+                mensajeEstado.classList.remove('d-none');
+                tablaPacientes.classList.add('d-none');
+                return;
+            }
+
+            mensajeEstado.classList.add('d-none');
+            tablaPacientes.classList.remove('d-none');
+
+            pacientes.forEach(p => {
+                const fila = document.createElement('tr');
+
+                fila.innerHTML = `
+                    <td class="ps-4 fw-bold">${p.id}</td>
+                    <td>${p.rut}</td>
+                    <td>${p.nombre}</td>
+                    <td>${p.edad} años</td>
+                    <td>${p.genero}</td>
+                    <td>${p.telefono}</td>
+                    <td>$${p.costo_consulta.toLocaleString('es-CL')}</td>
+                    <td class="text-center pe-4">
+                        <a href="/editar/${p.id}/" class="btn btn-sm btn-outline-primary me-1">Editar</a>
+                        <button onclick="eliminarPaciente(${p.id}, '${p.nombre}')" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                    </td>
+                `;
+
+                cuerpoTabla.appendChild(fila);
+            });
+
+        } catch (error) {
+            mensajeEstado.textContent = 'No se pudo conectar con el servidor API.';
+            mensajeEstado.classList.remove('d-none');
+            console.error(error);
+        }
+    }
+
+    async function eliminarPaciente(id, nombre) {
+        const token = sessionStorage.getItem('token');
+        if (!token) {
+            window.location.href = "{% url 'login' %}";
+            return;
+        }
+
+        const confirmar = confirm(`¿Estás seguro de que deseas eliminar a ${nombre} (ID: ${id})?`);
+        if (!confirmar) return;
+
+        try {
+            const respuesta = await fetch(`/api/pacientes/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Token ${token}`
+                }
+            });
+
+            if (respuesta.status === 204) {
+                cargarPacientes();
+            } else if (respuesta.status === 401 || respuesta.status === 403) {
+                sessionStorage.removeItem('token');
+                window.location.href = "{% url 'login' %}";
+            } else {
+                alert('No se pudo eliminar el registro.');
+            }
+        } catch (error) {
+            console.error('Error al eliminar:', error);
+            alert('Error de conexión al eliminar el paciente.');
+        }
+    }
+
+    function cerrarSesion() {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('username');
+        window.location.href = "{% url 'login' %}";
+    }
+
+    cargarPacientes();
+</script>
 {% endblock %}

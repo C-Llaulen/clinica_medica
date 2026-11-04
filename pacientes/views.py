@@ -16,6 +16,7 @@ def crear_paciente(request):
             return redirect('listar_pacientes')
     else:
         form = PacienteCrearForm()
+    
     return render(request, 'pacientes/crear.html', {'form': form})
 
 def editar_paciente(request, id):
@@ -35,3 +36,6 @@ def eliminar_paciente(request, id):
         paciente.delete()
         return redirect('listar_pacientes')
     return render(request, 'pacientes/eliminar.html', {'paciente': paciente})
+
+def login_view(request):
+    return render(request, 'pacientes/login.html')

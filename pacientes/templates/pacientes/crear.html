@@ -10,7 +10,23 @@
             <div class="card-body bg-white p-4">
                 <form method="POST">
                     {% csrf_token %}
+
+                    {# Bloque de errores visible #}
+                    {% if form.errors %}
+                        <div class="alert alert-danger mb-3">
+                            <h6 class="alert-heading fw-bold mb-1">Por favor corrige los siguientes errores:</h6>
+                            <ul class="mb-0 ps-3">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li><strong>{{ field|title }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
                     {{ form.as_p }}
+
                     <hr style="border-color: #C7DAD3;">
                     <div class="d-flex justify-content-between">
                         <a href="{% url 'listar_pacientes' %}" class="btn btn-outline-secondary">Cancelar</a>
