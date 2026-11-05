@@ -1,62 +1,106 @@
 from django import forms
 from .models import Paciente
 
+
 class PacienteCrearForm(forms.ModelForm):
     class Meta:
         model = Paciente
-        fields = '__all__'
+        fields = [
+            'rut', 'nombre', 'edad', 'genero',
+            'telefono', 'correo', 'diagnostico', 'costo_consulta'
+        ]
         widgets = {
             'rut': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': '12345678-9',
-                'maxlength': '12',
+                'maxlength': '10',
             }),
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ej. Juan Pérez',
-                'maxlength': '30',
+                'placeholder': 'Ej: Juan Pérez',
+                'maxlength': '20',
             }),
             'edad': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': '0',
                 'max': '100',
-                'placeholder': 'Ej. 25',
-                'oninput': 'if(this.value.length > 3) this.value = this.value.slice(0, 3); if(parseInt(this.value) > 100) this.value = 100;'
+                'placeholder': '0 - 100',
             }),
             'genero': forms.Select(attrs={
                 'class': 'form-select',
             }),
-            'correo': forms.EmailInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'nombre@correo.com',
-                'maxlength': '40',
-            }),
             'telefono': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': '+56912345678',
-                'maxlength': '12',
-                'oninput': "this.value = this.value.replace(/[^0-9+]/g, '');",
+                'placeholder': '912345678',
+                'maxlength': '9',
             }),
-            'diagnostico': forms.Textarea(attrs={
+            'correo': forms.EmailInput(attrs={
                 'class': 'form-control',
-                'rows': 4,
-                'maxlength': '500',
-                'placeholder': 'Descripción breve...',
+                'placeholder': 'nombre@correo.cl',
+                'maxlength': '35',
             }),
             'costo_consulta': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': '1000',
                 'max': '500000',
-                'step': '1000',
-                'placeholder': 'Ej. 25000',
-                'oninput': 'if(this.value.length > 6) this.value = this.value.slice(0, 6);'
+                'placeholder': '1000 - 500000',
+            }),
+            'diagnostico': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Descripción del diagnóstico...',
+                'maxlength': '250',
             }),
         }
 
 
-class PacienteEditarForm(PacienteCrearForm):
-    class Meta(PacienteCrearForm.Meta):
+class PacienteEditarForm(forms.ModelForm):
+    class Meta:
+        model = Paciente
+        fields = [
+            'rut', 'nombre', 'edad', 'genero',
+            'telefono', 'correo', 'diagnostico', 'costo_consulta'
+        ]
         widgets = {
-            **PacienteCrearForm.Meta.widgets,
-            'rut': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'rut': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '12345678-9',
+                'maxlength': '10',
+            }),
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Juan Pérez',
+                'maxlength': '20',
+            }),
+            'edad': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0',
+                'max': '100',
+                'placeholder': '0 - 100',
+            }),
+            'genero': forms.Select(attrs={
+                'class': 'form-select',
+            }),
+            'telefono': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '912345678',
+                'maxlength': '9',
+            }),
+            'correo': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'nombre@correo.cl',
+                'maxlength': '25',
+            }),
+            'costo_consulta': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1000',
+                'max': '500000',
+                'placeholder': '1000 - 500000',
+            }),
+            'diagnostico': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Descripción del diagnóstico...',
+                'maxlength': '250',
+            }),
         }

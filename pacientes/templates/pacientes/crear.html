@@ -3,38 +3,117 @@
 {% block contenido %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card card-custom">
+        <div class="card card-custom shadow-sm">
             <div class="card-header card-header-custom py-3">
-                <h5 class="mb-0">Nuevo Ingreso de Paciente</h5>
+                <h4 class="mb-0">Registrar Nuevo Paciente</h4>
             </div>
-            <div class="card-body bg-white p-4">
-                <form method="POST">
+            <div class="card-body p-4 bg-white">
+                <div id="contenedorErrores" class="alert alert-danger d-none" role="alert"></div>
+
+                <form id="formPaciente" method="post">
                     {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        {% for field in form %}
+                            <div class="{% if field.name == 'diagnostico' %}col-12{% elif field.name == 'edad' or field.name == 'genero' or field.name == 'telefono' %}col-md-4{% else %}col-md-6{% endif %}">
+                                <label for="{{ field.id_for_label }}" class="form-label fw-bold">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="text-danger small">{{ field.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
 
-                    {# Bloque de errores visible #}
-                    {% if form.errors %}
-                        <div class="alert alert-danger mb-3">
-                            <h6 class="alert-heading fw-bold mb-1">Por favor corrige los siguientes errores:</h6>
-                            <ul class="mb-0 ps-3">
-                                {% for field, errors in form.errors.items %}
-                                    {% for error in errors %}
-                                        <li><strong>{{ field|title }}:</strong> {{ error }}</li>
-                                    {% endfor %}
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    {% endif %}
-
-                    {{ form.as_p }}
-
-                    <hr style="border-color: #C7DAD3;">
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between mt-4">
                         <a href="{% url 'listar_pacientes' %}" class="btn btn-outline-secondary">Cancelar</a>
-                        <button type="submit" class="btn btn-clinica">Guardar Ficha Médica</button>
+                        <button type="submit" class="btn btn-clinica px-4" id="btnGuardar">Guardar Paciente</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    const form = document.getElementById('formPaciente');
+    const contenedorErrores = document.getElementById('contenedorErrores');
+    const btnGuardar = document.getElementById('btnGuardar');
+
+    ['id_edad', 'id_telefono', 'id_costo_consulta'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('keypress', function(e) {
+                if (e.charCode < 48 || e.charCode > 57) {
+                    e.preventDefault();
+                }
+            });
+        }
+    });
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        contenedorErrores.classList.add('d-none');
+        contenedorErrores.replaceChildren();
+
+        const token = sessionStorage.getItem('token');
+        if (!token) {
+            window.location.href = "{% url 'login' %}";
+            return;
+        }
+
+        const datos = {
+            rut: document.getElementById('id_rut').value.trim(),
+            nombre: document.getElementById('id_nombre').value.trim(),
+            edad: parseInt(document.getElementById('id_edad').value, 10),
+            genero: document.getElementById('id_genero').value,
+            correo: document.getElementById('id_correo').value.trim(),
+            telefono: document.getElementById('id_telefono').value.trim(),
+            diagnostico: document.getElementById('id_diagnostico').value.trim(),
+            costo_consulta: parseInt(document.getElementById('id_costo_consulta').value, 10)
+        };
+
+        btnGuardar.disabled = true;
+        btnGuardar.textContent = 'Guardando...';
+
+        try {
+            const respuesta = await fetch('/api/pacientes/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${token}`
+                },
+                body: JSON.stringify(datos)
+            });
+
+            if (respuesta.status === 201) {
+                window.location.href = "{% url 'listar_pacientes' %}";
+            } else if (respuesta.status === 401 || respuesta.status === 403) {
+                sessionStorage.removeItem('token');
+                window.location.href = "{% url 'login' %}";
+            } else {
+                const errores = await respuesta.json();
+                
+                const lista = document.createElement('ul');
+                lista.className = 'mb-0 ps-3';
+
+                Object.keys(errores).forEach(campo => {
+                    const item = document.createElement('li');
+                    item.textContent = `${campo}: ${errores[campo].join(', ')}`;
+                    lista.appendChild(item);
+                });
+
+                contenedorErrores.appendChild(lista);
+                contenedorErrores.classList.remove('d-none');
+            }
+        } catch (error) {
+            contenedorErrores.textContent = 'Error de conexión con la API.';
+            contenedorErrores.classList.remove('d-none');
+        } finally {
+            btnGuardar.disabled = false;
+            btnGuardar.textContent = 'Guardar Paciente';
+        }
+    });
+</script>
 {% endblock %}

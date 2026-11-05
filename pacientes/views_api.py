@@ -69,3 +69,7 @@ class PacienteDetailAPIView(APIView):
             {'mensaje': 'Paciente eliminado correctamente de la base de datos.'},
             status=status.HTTP_204_NO_CONTENT
         )
+
+
+
+
